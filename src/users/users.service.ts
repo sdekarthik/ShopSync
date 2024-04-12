@@ -60,7 +60,7 @@ export class UsersService {
       }
       if(checkShopPhoneNoUnique){
         for(let i=0;i<createUserDto.shopDetails.length;i++){
-          const query="https://api.geoapify.com/v1/geocode/search?text="+createUserDto.shopDetails[i].address+"&apiKey=22d2403e7c844c3ba6bee009c4deed6f";
+          const query="https://api.geoapify.com/v1/geocode/search?text="+createUserDto.shopDetails[i].address+"&apiKey=<apiKey>";
           const ans=await axios.get(query)
           if(!ans || ans.data['features'].length==0){
             throw new BadRequestException('Enter proper address')
