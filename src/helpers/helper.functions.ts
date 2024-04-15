@@ -172,7 +172,7 @@ export class HelperFunctions{
           throw new UnauthorizedException('Please login before access')
         }
         
-        const publicKey=readFileSync('/home/karthikeyan/Documents/HAVELLS/NestJS/havells-project/src/auth/keys/havells-public.key','utf-8')
+        const publicKey=readFileSync('/home/karthikeyan/Documents/HAVELLS/NestJS/havells-project/src/auth/keys/user-public.key','utf-8')
         const data=await jwt.verify(token,publicKey)
         if(!data){
           throw new UnauthorizedException('Invalid token')
