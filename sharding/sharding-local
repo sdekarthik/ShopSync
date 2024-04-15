@@ -99,10 +99,16 @@ rsconf = {
 				   ]
 				}
 	rs.initiate(rsconf)
+
 Step 2.4  Starting configuration servers replica sets and making it connect to sharded clusters and connecting through mongos
 mongos --configdb config_repl/localhost:28041,localhost:28042,localhost:28043 --bind_ip localhost &		  
 
+
+// SET UP SHARDING AND SHARDKEY AFTER THE DOCUMENTS ARE CREATED IN MONGODB
+
+
 Connect to the Sharded Cluster
+
 mongosh --host localhost --port 27012                                                                                                        [ Connecting to shard_repl as primary DB ( Connect MongoDb in this localhost - 27012) AFTER CONFGURING]
 			sh.addShard( "shard_repl/localhost:28081,localhost:28082,localhost:28083")		// connecting to the sharded clusters 
 			sh.addShard( "shard2_repl/localhost:29081,localhost:29082,localhost:29083")
