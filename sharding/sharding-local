@@ -1,0 +1,196 @@
+STEP 1 : Configure the config servers 	→ In the port 28041
+nohup mongod --configsvr  --port 28041 --bind_ip localhost --replSet config_repl --dbpath /home/karthikeyan/shard-demo/configsrv &			
+nohup mongod --configsvr  --port 28043 --bind_ip localhost --replSet config_repl --dbpath /home/karthikeyan/shard-demo/configsrv2 &			
+nohup mongod --configsvr  --port 28042 --bind_ip localhost --replSet config_repl --dbpath /home/karthikeyan/shard-demo/configsrv1 &			
+mongosh --host localhost  --port 28041
+config_repl [direct: primary] test> 
+rsconf = {
+				  _id: "config_repl",
+				  members: [
+					{
+					 _id: 0,
+					 host: "localhost:28041"
+					},
+					{
+					 _id: 1,
+					 host: "localhost:28042"
+					},
+					{
+					 _id: 2,
+					 host: "localhost:28043"
+					}
+				   ]
+				}
+		
+		rs.initiate(rsconf)
+
+
+STEP 2 : Configure the shards
+Step 2.1	Configuring shard_repl
+nohup mongod --shardsvr --port 28081 --bind_ip localhost --replSet shard_repl --dbpath /home/karthikeyan/shard-demo/shardrep1 &			
+nohup mongod --shardsvr --port 28082 --bind_ip localhost --replSet shard_repl --dbpath /home/karthikeyan/shard-demo/shardrep2 &			
+nohup mongod --shardsvr --port 28083 --bind_ip localhost --replSet shard_repl --dbpath /home/karthikeyan/shard-demo/shardrep3 &			
+mongosh --host localhost  --port 28081
+shard_repl [direct: primary] test> 
+rsconf = {
+				  _id: "shard_repl",
+				  members: [
+					{
+					 _id: 0,
+					 host: "localhost:28081"
+					},
+					{
+					 _id: 1,
+					 host: "localhost:28082"
+					},
+					{
+					 _id: 2,
+					 host: "localhost:28083"
+					}
+				   ]
+				}
+		
+rs.initiate(rsconf)
+Step 2.2	Configuring shard2_repl
+nohup mongod --shardsvr --port 29081 --bind_ip localhost --replSet shard2_repl --dbpath /home/karthikeyan/shard-demo/shard2rep1 &			
+nohup mongod --shardsvr --port 29082 --bind_ip localhost --replSet shard2_repl --dbpath /home/karthikeyan/shard-demo/shard2rep2 &			
+nohup mongod --shardsvr --port 29083 --bind_ip localhost --replSet shard2_repl --dbpath /home/karthikeyan/shard-demo/shard2rep3 &			
+mongosh --host localhost  --port 28081
+shard_repl [direct: primary] test> 
+rsconf = {
+				  _id: "shard2_repl",
+				  members: [
+					{
+					 _id: 0,
+					 host: "localhost:29081"
+					},
+					{
+					 _id: 1,
+					 host: "localhost:29082"
+					},
+					{
+					 _id: 2,
+					 host: "localhost:29083"
+					}
+				   ]
+				}
+		
+rs.initiate(rsconf)
+Step 2.3	Configuring shard3_repl
+nohup mongod --shardsvr --port 29181 --bind_ip localhost --replSet shard3_repl --dbpath /home/karthikeyan/shard-demo/shard3rep1 &			
+nohup mongod --shardsvr --port 29182 --bind_ip localhost --replSet shard3_repl --dbpath /home/karthikeyan/shard-demo/shard3rep2 &			
+nohup mongod --shardsvr --port 29183 --bind_ip localhost --replSet shard3_repl --dbpath /home/karthikeyan/shard-demo/shard3rep3 &			
+shard3_repl [direct: primary] test> 
+rsconf = {
+				  _id: "shard2_repl",
+				  members: [
+					{
+					 _id: 0,
+					 host: "localhost:29181"
+					},
+					{
+					 _id: 1,
+					 host: "localhost:29182"
+					},
+					{
+					 _id: 2,
+					 host: "localhost:29183"
+					}
+				   ]
+				}
+	rs.initiate(rsconf)
+Step 2.4  Starting configuration servers replica sets and making it connect to sharded clusters and connecting through mongos
+mongos --configdb config_repl/localhost:28041,localhost:28042,localhost:28043 --bind_ip localhost &		  
+
+Connect to the Sharded Cluster
+mongosh --host localhost --port 27012                                                                                                        [ Connecting to shard_repl as primary DB ( Connect MongoDb in this localhost - 27012) AFTER CONFGURING]
+			sh.addShard( "shard_repl/localhost:28081,localhost:28082,localhost:28083")		// connecting to the sharded clusters 
+			sh.addShard( "shard2_repl/localhost:29081,localhost:29082,localhost:29083")
+			sh.addShard( "shard2_repl/localhost:29181,localhost:29182,localhost:29183")
+			sh.enableSharding("demo")		// Enables sharding of DB
+sh.shardCollection("demo.HUsers", { _id : 1} )	// setting up the shard key for the collection HUsers of db demo
+
+
+Step 2.5 Below shows that sharding done successfully
+[direct: mongos] test> sh.status()
+shardingVersion
+{ _id: 1, clusterId: ObjectId('65eaa8717341b3e8e7814cd9') }
+---
+shards
+[
+  {
+    _id: 'shard2_repl',
+    host: 'shard2_repl/localhost:29081,localhost:29082,localhost:29083',
+    state: 1,
+    topologyTime: Timestamp({ t: 1710130603, i: 2 })
+  },
+  {
+    _id: 'shard3_repl',
+    host: 'shard3_repl/localhost:29181,localhost:29182,localhost:29183',
+    state: 1,
+    topologyTime: Timestamp({ t: 1711574047, i: 1 })
+  },
+  {
+    _id: 'shard_repl',
+    host: 'shard_repl/localhost:28081,localhost:28082,localhost:28083',
+    state: 1,
+    topologyTime: Timestamp({ t: 1710130583, i: 2 })
+  }
+]
+---
+active mongoses
+[ { '7.0.5': 1 } ]
+---
+autosplit
+{ 'Currently enabled': 'yes' }
+---
+balancer
+{
+  'Currently running': 'no',
+  'Currently enabled': 'yes',
+  'Failed balancer rounds in last 5 attempts': 0,
+  'Migration Results for the last 24 hours': 'No recent migrations'
+}
+---
+databases
+[
+  {
+    database: { _id: 'config', primary: 'config', partitioned: true },
+    collections: {
+      'config.system.sessions': {
+        shardKey: { _id: 1 },
+        unique: false,
+        balancing: true,
+        chunkMetadata: [ { shard: 'shard2_repl', nChunks: 1 } ],
+        chunks: [
+          { min: { _id: MinKey() }, max: { _id: MaxKey() }, 'on shard': 'shard2_repl', 'last modified': Timestamp({ t: 1, i: 0 }) }
+        ],
+        tags: []
+      }
+    }
+  },
+  {
+    database: {
+      _id: 'demo',
+      primary: 'shard_repl',
+      partitioned: false,
+      version: {
+        uuid: UUID('8bf369de-82ff-4f9d-8484-771477271373'),
+        timestamp: Timestamp({ t: 1710131394, i: 2 }),
+        lastMod: 1
+      }
+    },
+    collections: {
+      'demo.HUser': {
+        shardKey: { _id: 1 },
+        unique: false,
+        balancing: true,
+        chunkMetadata: [ { shard: 'shard3_repl', nChunks: 1 } ],
+        chunks: [
+          { min: { _id: MinKey() }, max: { _id: MaxKey() }, 'on shard': 'shard3_repl', 'last modified': Timestamp({ t: 1, i: 4 }) }
+        ],
+        tags: []
+      }
+    }
+  }
+]
